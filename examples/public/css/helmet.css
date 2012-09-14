@@ -1,0 +1,15 @@
+html,
+body {
+  margin: 0px;
+  padding: 0px;
+  font-family: 'Arial', 'Sans Serif', 'Courier New', 'Times New Roman';
+}
+
+.container {
+  width: 940px;
+  margin: 0px auto;
+}
+
+h1, h2, h3, h4, h5 {
+  margin: 0px 0px 20px;
+}
