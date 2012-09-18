@@ -11,6 +11,8 @@ module Helmet
 
     def render(engine, data, options = {}, locals = {}, &block)
       layout = options.delete(:layout)
+      # force template update
+      @@template_cache.clear unless Goliath.env == :production
       compiled_template = @@template_cache.fetch(data, options) do
         template = Tilt.new(find_template(engine, data), nil, options)
       end      
