@@ -4,8 +4,13 @@ require 'helmet/templates'
 
 module Helmet
   class API < Goliath::API
-    @@routes = {}
 
+    # Handle application routes
+    @@routes          = {}
+    
+    # Handle before filters
+    @@before_filters  = []
+    
     class << self
       include Templates
 
@@ -24,7 +29,11 @@ module Helmet
       def views_folder
         @@views_folder
       end
-
+      
+      def before(route, &block)
+        @@before_filters << [route, block]
+      end
+      
       def get(route, &block) 
         register_route('GET', route, &block);
         register_route('HEAD', route, &block);
@@ -66,7 +75,23 @@ module Helmet
     end
 
     def response(env)
-      sig = API.signature(env['REQUEST_METHOD'], env['REQUEST_PATH'])
+      path = env['REQUEST_PATH']
+
+      # evaluate filters
+      resp = catch(:halt) do
+        @@before_filters.each do |route|
+          case route.first
+          when String
+            route[1].call(env) if route.first == path
+          when Regexp
+            route[1].call(env) if route.first =~ path
+          end
+        end
+        nil
+      end
+      return resp if resp
+      
+      sig = API.signature(env['REQUEST_METHOD'], path)
       block = @@routes[sig]
       if block
         block.call env
