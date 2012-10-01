@@ -5,10 +5,14 @@ require 'helmet'
 class Test < Helmet::API
   
   before /\/x\S*/ do
-    throw :halt, [200, {}, 'filtered!']
+    halt 'filtered!'
   end  
   
   get '/' do
-    [200, {}, 'ok']
+    'ok'
+  end
+  
+  get '/redirect' do
+    redirect 'http://www.google.com'
   end
 end

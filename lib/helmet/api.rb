@@ -1,8 +1,9 @@
 require 'goliath/api'
 
-require 'helmet/templates'
+require 'helmet/handler'
 
 module Helmet
+    
   class API < Goliath::API
 
     # Handle application routes
@@ -12,8 +13,6 @@ module Helmet
     @@before_filters  = []
     
     class << self
-      include Templates
-
       def public_folder=(folder)
         @@public_folder = folder
       end
@@ -75,28 +74,36 @@ module Helmet
     end
 
     def response(env)
-      path = env['REQUEST_PATH']
+      # request path
+      path    = env['REQUEST_PATH']
+      
+      # request handler
+      handler = Handler.new(env)
 
       # evaluate filters
       resp = catch(:halt) do
         @@before_filters.each do |route|
           case route.first
           when String
-            route[1].call(env) if route.first == path
+            handler.instance_exec &route[1] if route.first == path
           when Regexp
-            route[1].call(env) if route.first =~ path
+            handler.instance_exec &route[1] if route.first =~ path
           end
         end
         nil
       end
+      p resp
       return resp if resp
       
       sig = API.signature(env['REQUEST_METHOD'], path)
       block = @@routes[sig]
       if block
-        block.call env
+        handler.handle!(&block)
       else
-        [404, {}, 'not found!']
+        handler.handle! do
+          status 404
+          'not found!'
+        end
       end
     end
   end
