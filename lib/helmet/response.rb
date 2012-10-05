@@ -20,7 +20,7 @@ module Helmet
       @body     = ''
     end
     
-    # @return current request session
+    # @return (Array) HTTP response tuple [status, header, body]
     def format_response
       [@status, @header, @body]
     end

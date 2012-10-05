@@ -3,7 +3,6 @@ require 'goliath/api'
 require 'helmet/handler'
 
 module Helmet
-    
   class API < Goliath::API
 
     # Handle application routes
@@ -12,21 +11,15 @@ module Helmet
     # Handle before filters
     @@before_filters  = []
     
+    @@config          = Hash.new
+    
     class << self
-      def public_folder=(folder)
-        @@public_folder = folder
+      def set(key, value)
+        @@config[key.to_sym] = value
       end
 
-      def public_folder
-        @@public_folder
-      end
-
-      def views_folder=(folder)
-        @@views_folder = folder
-      end
-
-      def views_folder
-        @@views_folder
+      def config(key)
+        @@config[key.to_sym]
       end
       
       def before(route, &block)
@@ -46,7 +39,7 @@ module Helmet
         sig = API.signature(method, route)
         @@routes[sig] = block
       end
-
+      
       def signature(method, route)
         "#{method}#{route}"
       end
@@ -56,9 +49,9 @@ module Helmet
         setup_middlewares klass
 
         # compute public/ views folder
-        base = File.dirname(caller.first[/^[^:]*/])
-        self.public_folder = File.join(base, 'public')
-        self.views_folder = File.join(base, 'views')
+        base = File.expand_path(File.dirname(caller.first[/^[^:]*/]))
+        self.set :public_folder, File.join(base, 'public')
+        self.set :views_folder, File.join(base, 'views')
 
         super # update Goliath::Application.app_class
       end
@@ -80,31 +73,29 @@ module Helmet
       # request handler
       handler = Handler.new(env)
 
-      # evaluate filters
-      resp = catch(:halt) do
+      catch(:halt) do
+        # evaluate filters
         @@before_filters.each do |route|
           case route.first
           when String
-            handler.instance_exec &route[1] if route.first == path
+            handler.handle! &route[1] if route.first == path
           when Regexp
-            handler.instance_exec &route[1] if route.first =~ path
+            handler.handle! &route[1] if route.first =~ path
           end
         end
-        nil
-      end
-      p resp
-      return resp if resp
-      
-      sig = API.signature(env['REQUEST_METHOD'], path)
-      block = @@routes[sig]
-      if block
-        handler.handle!(&block)
-      else
-        handler.handle! do
-          status 404
-          'not found!'
+        
+        sig = API.signature(env['REQUEST_METHOD'], path)
+        block = @@routes[sig]
+        if block
+          handler.handle!(&block)
+        else
+          handler.handle! do
+            status 404
+            'not found!'
+          end
         end
       end
+      handler.response.format_response
     end
   end
 end

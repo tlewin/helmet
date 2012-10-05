@@ -19,9 +19,7 @@ module Helmet
     
     # @return (Response) request response
     def handle!(&block)
-      catch(:halt) do
-        @response.body = instance_exec(&block)
-      end
+      @response.body = instance_exec(&block)
       @response.format_response
     end
     

@@ -27,7 +27,7 @@ module Helmet
     
     def find_template(engine, template)
       filename = "#{template.to_s}.#{engine.to_s}"
-      File.join(views_folder, filename)
+      File.join(API.config(:views_folder), filename)
     end
   end
 end
