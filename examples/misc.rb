@@ -1,21 +1,23 @@
-$LOAD_PATH.unshift File.join('..', 'lib')
+$LOAD_PATH.unshift File.join(File.dirname(__FILE__), '..', 'lib')
 require 'helmet'
 
 class Misc < Helmet::API
   
   use Rack::Static,
-    :root => public_folder,
+    :root => config(:public_folder),
     :urls => ['/css']
 
-  get '/' do |env|
-    session = env['rack.session']
-    [200, {}, erb(:index, {:layout => :layout}, {:data => session[:data]})]
+  get '/' do
+    erb(:index, 
+      {:layout => :layout}, 
+      {:data => session[:data]})
   end
   
-  post '/session' do |env|
-    session = env['rack.session']
-    session[:data] = env['params']['session']
-    [200, {}, erb(:index, {:layout => :layout}, {:data => session[:data]})]
+  post '/session' do
+    session[:data] = @env['params']['session']
+    erb(:index, 
+      {:layout => :layout}, 
+      {:data => session[:data]})
   end
   
 end
