@@ -84,7 +84,7 @@ module Helmet
       path    = env['REQUEST_PATH']
       
       # request handler
-      handler = Handler.new(env)
+      handler = Handler.new(env, self.class)
 
       catch(:halt) do
         # evaluate filters

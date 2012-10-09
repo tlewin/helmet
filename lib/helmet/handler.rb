@@ -12,8 +12,9 @@ module Helmet
     
     attr_reader :response
     
-    def initialize(env)
+    def initialize(env, klass)
       @env      = env
+      @klass    = klass
       @response = Response.new(env)
     end
     
