@@ -6,7 +6,7 @@ module Helmet
     @@template_cache = Tilt::Cache.new
         
     def erb(template, options = {}, locals = {})
-     render :erb, template, options, locals
+     render(:erb, template, options, locals) 
     end
 
     def render(engine, data, options = {}, locals = {}, &block)
@@ -15,8 +15,8 @@ module Helmet
       @@template_cache.clear unless Goliath.env == :production
       compiled_template = @@template_cache.fetch(data, options) do
         template = Tilt.new(find_template(engine, data), nil, options)
-      end      
-      output = compiled_template.render nil, locals, &block
+      end
+      output = compiled_template.render(self, locals, &block)
       if layout
         return render(engine, layout, options, locals) {output}
       end
@@ -27,7 +27,7 @@ module Helmet
     
     def find_template(engine, template)
       filename = "#{template.to_s}.#{engine.to_s}"
-      File.join(API.config(:views_folder), filename)
+      File.join(@klass.config(:views_folder), filename)
     end
   end
 end
