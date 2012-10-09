@@ -14,7 +14,7 @@ class Misc < Helmet::API
   end
   
   post '/session' do
-    session[:data] = @env['params']['session']
+    session[:data] = env['params']['session']
     erb(:index, 
       {:layout => :layout}, 
       {:data => session[:data]})

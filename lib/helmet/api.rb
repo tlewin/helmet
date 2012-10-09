@@ -4,26 +4,27 @@ require 'helmet/handler'
 
 module Helmet
   class API < Goliath::API
-
-    # Handle application routes
-    @@routes          = {}
-    
-    # Handle before filters
-    @@before_filters  = []
-    
-    @@config          = Hash.new
     
     class << self
+      
       def set(key, value)
-        @@config[key.to_sym] = value
+        @config[key.to_sym] = value
       end
 
       def config(key)
-        @@config[key.to_sym]
+        @config[key.to_sym]
       end
       
       def before(route, &block)
-        @@before_filters << [route, block]
+        @before_filters << [route, block]
+      end
+      
+      def routes
+        @routes
+      end
+      
+      def before_filters
+        @before_filters
       end
       
       def get(route, &block) 
@@ -37,7 +38,7 @@ module Helmet
 
       def register_route(method, route, &block)
         sig = API.signature(method, route)
-        @@routes[sig] = block
+        @routes[sig] = block
       end
       
       def signature(method, route)
@@ -45,19 +46,31 @@ module Helmet
       end
 
       def inherited(klass)
+        klass.init
+        
         # setup basic middlewares
         setup_middlewares klass
 
         # compute public/ views folder
         base = File.expand_path(File.dirname(caller.first[/^[^:]*/]))
-        self.set :public_folder, File.join(base, 'public')
-        self.set :views_folder, File.join(base, 'views')
+        klass.set :public_folder, File.join(base, 'public')
+        klass.set :views_folder, File.join(base, 'views')
 
         super # update Goliath::Application.app_class
       end
 
-      private
+      def init
+        # Handle application routes
+        @routes          = {}
 
+        # Handle before filters
+        @before_filters  = []
+
+        @config          = {}
+      end
+
+      private
+            
       def setup_middlewares(klass)
         # support for session
         klass.use Rack::Session::Cookie
@@ -75,7 +88,7 @@ module Helmet
 
       catch(:halt) do
         # evaluate filters
-        @@before_filters.each do |route|
+        self.class.before_filters.each do |route|
           case route.first
           when String
             handler.handle! &route[1] if route.first == path
@@ -85,7 +98,7 @@ module Helmet
         end
         
         sig = API.signature(env['REQUEST_METHOD'], path)
-        block = @@routes[sig]
+        block = self.class.routes[sig]
         if block
           handler.handle!(&block)
         else

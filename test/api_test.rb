@@ -36,7 +36,7 @@ class APITest < Test::Unit::TestCase
   def setup
     @err = Proc.new { assert false, "API request failed" }
   end
-
+  
   def test_get
     with_api(Simple) do
       get_request({}, @err) do |c|
