@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name          = 'helmet'
-  s.version       = '0.1.2'
+  s.version       = '0.1.3'
   s.date          = Time.now
   s.summary       = 'Simple web framework for Goliath web server.'
   s.description   = s.summary

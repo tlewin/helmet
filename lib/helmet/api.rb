@@ -27,6 +27,15 @@ module Helmet
         @before_filters
       end
       
+      # include methods to the helper
+      def helpers(&block)
+        @helpers.module_exec(&block)
+      end
+      
+      def get_helpers
+        @helpers
+      end
+      
       def get(route, &block) 
         register_route('GET', route, &block);
         register_route('HEAD', route, &block);
@@ -67,6 +76,8 @@ module Helmet
         @before_filters  = []
 
         @config          = {}
+        
+        @helpers         = Module.new
       end
 
       private
@@ -85,6 +96,9 @@ module Helmet
       
       # request handler
       handler = Handler.new(env, self.class)
+      
+      # include Helpers
+      handler.extend(self.class.get_helpers)
 
       catch(:halt) do
         # evaluate filters

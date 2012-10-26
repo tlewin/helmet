@@ -63,7 +63,13 @@ module Helmet
       @response.body
     end
     
+    # @return (Hash) request params
+    def params
+      env.params || {}
+    end
+    
     def content_type(type)
+      # TODO implement content type header
     end
   end
 end
