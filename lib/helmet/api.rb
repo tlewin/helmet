@@ -1,6 +1,10 @@
 require 'goliath/api'
+require 'goliath/constants'
+require 'http_router'
 
 require 'helmet/handler'
+
+require 'pry'
 
 module Helmet
   class API < Goliath::API
@@ -15,8 +19,8 @@ module Helmet
         @config[key.to_sym]
       end
       
-      def before(route, &block)
-        @before_filters << [route, block]
+      def before(route, opts = {}, &block)
+        @before_filters.add(route, opts, &block)
       end
       
       def routes
@@ -36,24 +40,36 @@ module Helmet
         @helpers
       end
       
-      def get(route, &block) 
-        register_route('GET', route, &block);
-        register_route('HEAD', route, &block);
-      end
-      def post(route, &block) register_route('POST', route, &block); end
-      def put(route, &block) register_route('PUT', route, &block); end
-      def delete(route, &block) register_route('DELETE', route, &block); end
-      def head(route, &block) register_route('HEAD', route, &block); end
-
-      def register_route(method, route, &block)
-        sig = API.signature(method, route)
-        @routes[sig] = block
+      def get(route, opts = {}, &block) 
+        register_route(:GET, route, opts, &block);
+        # HttpRouter already include head
+        # register_route('HEAD', route, opts, &block);
       end
       
-      def signature(method, route)
-        "#{method}#{route}"
-      end
+      def connect(route, opts = {}, &block) register_route(:CONNECT, route, opts, &block); end
+      def delete(route, opts = {}, &block) register_route(:DELETE, route, opts, &block); end
+      # def head(route, opts = {}, &block) register_route(:HEAD, route, opts, &block); end
+      # def options(route, opts = {}, &block) register_route(:OPTIONS, route, opts, &block); end
+      def post(route, opts = {}, &block) register_route(:POST, route, opts, &block); end
+      def put(route, opts = {}, &block) register_route(:PUT, route, opts, &block); end
 
+      def register_route(method, route, opts = {}, &block)       
+        case method
+        when :GET
+          @routes.get(route, opts, &block)
+        when :CONNECT
+          @routes.connect(route, opts, &block)
+        when :DELETE
+          @routes.delete(route, opts, &block)
+        when :OPTIONS
+          @routes.options(route, opts, &block)
+        when :POST
+          @routes.post(route, opts, &block)
+        when :PUT
+          @routes.put(route, opts, &block)
+        end
+      end
+    
       def inherited(klass)
         klass.init
         
@@ -70,10 +86,10 @@ module Helmet
 
       def init
         # Handle application routes
-        @routes          = {}
+        @routes          = HttpRouter.new
 
         # Handle before filters
-        @before_filters  = []
+        @before_filters  = HttpRouter.new
 
         @config          = {}
         
@@ -83,17 +99,12 @@ module Helmet
       private
             
       def setup_middlewares(klass)
-        # support for session
-        klass.use Rack::Session::Cookie
         # support for forms
         klass.use Goliath::Rack::Params 
       end
     end
 
     def response(env)
-      # request path
-      path    = env['REQUEST_PATH']
-      
       # request handler
       handler = Handler.new(env, self.class)
       
@@ -101,20 +112,16 @@ module Helmet
       handler.extend(self.class.get_helpers)
 
       catch(:halt) do
-        # evaluate filters
-        self.class.before_filters.each do |route|
-          case route.first
-          when String
-            handler.handle! &route[1] if route.first == path
-          when Regexp
-            handler.handle! &route[1] if route.first =~ path
-          end
+        # evaluate any route match
+        filters = self.class.before_filters.recognize(env).first || []
+        filters.each do |f|
+          handler.handle! &f.route.dest
         end
-        
-        sig = API.signature(env['REQUEST_METHOD'], path)
-        block = self.class.routes[sig]
-        if block
-          handler.handle!(&block)
+
+        routes_recognized = self.class.routes.recognize(env).first 
+        if routes_recognized
+          # Use the first matched route
+          handler.handle! &routes_recognized.first.route.dest
         else
           handler.handle! do
             status 404
@@ -122,6 +129,7 @@ module Helmet
           end
         end
       end
+      
       handler.response.format_response
     end
   end

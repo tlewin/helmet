@@ -3,8 +3,10 @@ require File.join(File.dirname(__FILE__), 'test_helper')
 require 'uri'
 
 class Simple < Helmet::API
+
+  use Rack::Session::Cookie, :secret => 'remove_security_warning'
   
-  before /\/x\w*$/ do
+  before '/xx' do
     halt 'filtered!'
   end
   
@@ -22,6 +24,10 @@ class Simple < Helmet::API
   
   delete '/' do
     'delete'
+  end
+
+  get '/raise' do
+    raise 'Error'
   end
   
   get '/redirect' do
@@ -86,5 +92,13 @@ class APITest < Test::Unit::TestCase
       end
     end
   end
+
+  # def test_raise
+  #   with_api(Simple) do
+  #     get_request({:path => '/raise'}, @err) do |c|
+  #       assert_equal 'get', c.response
+  #     end
+  #   end
+  # end
   
 end
