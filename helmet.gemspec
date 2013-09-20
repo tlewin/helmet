@@ -16,7 +16,7 @@ Gem::Specification.new do |s|
   s.license       = 'MIT'
 
   s.add_dependency 'goliath'
-  s.add_dependency 'http_route'
+  s.add_dependency 'http_router'
   s.add_dependency 'tilt'
 
   s.add_development_dependency 'yard'
