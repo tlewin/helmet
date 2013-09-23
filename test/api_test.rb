@@ -6,12 +6,16 @@ class Simple < Helmet::API
 
   use Rack::Session::Cookie, :secret => 'remove_security_warning'
   
-  before '/xx' do
+  before '/filtered' do
     halt 'filtered!'
   end
   
   get '/' do
     'get'
+  end
+
+  get '/filtered' do
+    'should not be here!'
   end
   
   post '/' do
@@ -77,7 +81,7 @@ class APITest < Test::Unit::TestCase
 
   def test_filter
     with_api(Simple) do
-      get_request({:path => '/xx'}, @err) do |c|
+      get_request({:path => '/filtered'}, @err) do |c|
         assert_equal 'filtered!', c.response
       end
     end
