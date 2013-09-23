@@ -113,15 +113,19 @@ module Helmet
 
       catch(:halt) do
         # evaluate any route match
-        filters = self.class.before_filters.recognize(env).first || []
+        filters = self.class.before_filters.recognize(env).first 
+
         filters.each do |f|
           handler.handle! &f.route.dest
-        end
+        end if filters
 
         routes_recognized = self.class.routes.recognize(env).first 
         if routes_recognized
           # Use the first matched route
-          handler.handle! &routes_recognized.first.route.dest
+          http_router_response = routes_recognized.first
+          # Bind params to the env
+          env.params.merge! http_router_response.params
+          handler.handle! &http_router_response.route.dest
         else
           handler.handle! do
             status 404
