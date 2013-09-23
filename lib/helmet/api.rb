@@ -116,7 +116,14 @@ module Helmet
         filters = self.class.before_filters.recognize(env).first 
 
         filters.each do |f|
+          # include route params into env
+          route_params = f.params
+          env.params.merge! route_params
+          
           handler.handle! &f.route.dest
+          
+          # remove after usage
+          env.params.delete_if {|k,v| route_params[k] == v}
         end if filters
 
         routes_recognized = self.class.routes.recognize(env).first 
