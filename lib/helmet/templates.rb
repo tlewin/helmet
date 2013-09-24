@@ -6,11 +6,12 @@ module Helmet
     @@template_cache = Tilt::Cache.new
         
     def erb(template, options = {}, locals = {})
-     render(:erb, template, options, locals) 
+      render(:erb, template, options, locals) 
     end
 
     def render(engine, data, options = {}, locals = {}, &block)
-      layout = options.delete(:layout)
+      layout = options[:layout]
+      layout = :layout if layout.nil?
       # force template update
       @@template_cache.clear unless Goliath.env == :production
       compiled_template = @@template_cache.fetch(data, options) do
@@ -18,7 +19,12 @@ module Helmet
       end
       output = compiled_template.render(self, locals, &block)
       if layout
-        return render(engine, layout, options, locals) {output}
+        begin
+          options.merge!(layout: false)
+          return render(engine, layout, options, locals) {output}
+        rescue 
+          # Do nothing
+        end
       end
       output
     end
@@ -27,7 +33,8 @@ module Helmet
     
     def find_template(engine, template)
       filename = "#{template.to_s}.#{engine.to_s}"
-      File.join(@klass.config(:views_folder), filename)
+      File.join(@klass.settings[:views_folder], filename)
     end
   end
+
 end
