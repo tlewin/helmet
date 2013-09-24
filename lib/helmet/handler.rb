@@ -67,6 +67,11 @@ module Helmet
     def params
       env.params || {}
     end
+
+    # @return [Hash] config object
+    def config
+      env.config
+    end
     
     def content_type(type)
       # TODO implement content type header

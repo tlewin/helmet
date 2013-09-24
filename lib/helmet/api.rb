@@ -4,20 +4,12 @@ require 'http_router'
 
 require 'helmet/handler'
 
-require 'pry'
-
 module Helmet
   class API < Goliath::API
     
     class << self
-      
-      def set(key, value)
-        @config[key.to_sym] = value
-      end
 
-      def config(key)
-        @config[key.to_sym]
-      end
+      attr_accessor :settings
       
       def before(route, opts = {}, &block)
         @before_filters.add(route, opts, &block)
@@ -78,8 +70,9 @@ module Helmet
 
         # compute public/ views folder
         base = File.expand_path(File.dirname(caller.first[/^[^:]*/]))
-        klass.set :public_folder, File.join(base, 'public')
-        klass.set :views_folder, File.join(base, 'views')
+        
+        klass.settings[:public_folder]  = File.join(base, 'public')
+        klass.settings[:views_folder]   = File.join(base, 'views')
 
         super # update Goliath::Application.app_class
       end
@@ -91,7 +84,7 @@ module Helmet
         # Handle before filters
         @before_filters  = HttpRouter.new
 
-        @config          = {}
+        @settings        = {}
         
         @helpers         = Module.new
       end
