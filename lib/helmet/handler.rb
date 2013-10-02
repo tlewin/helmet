@@ -1,6 +1,8 @@
 require 'helmet/templates'
 require 'helmet/response'
 
+require 'rack/mime'
+
 module Helmet
 
   # Handle each request and provide usefull methods for request handling
@@ -73,8 +75,21 @@ module Helmet
       env.config
     end
     
-    def content_type(type)
-      # TODO implement content type header
+    # Set content-type header based on extension
+    #
+    # @param [String, Symbol] ext mime extension
+    # @return [String] mime type (@see mime_type)
+    def content_type ext
+      header['Content-Type'] = mime_type(ext)
+    end
+
+    # Return mime type based on extension
+    # Uses Rack::Mime library.
+    #
+    # @param [String, Symbol] ext mime type extension
+    # @return [String] mime type
+    def mime_type ext
+      Rack::Mime.mime_type ".#{ext}"
     end
   end
 end

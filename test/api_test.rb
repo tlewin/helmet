@@ -1,6 +1,7 @@
 require File.join(File.dirname(__FILE__), 'test_helper')
 
 require 'uri'
+require 'rack/mime'
 
 class Simple < Helmet::API
 
@@ -36,6 +37,11 @@ class Simple < Helmet::API
   
   get '/redirect' do
     redirect '/redirected'
+  end
+
+  get '/ct' do
+    ct = params['ct'].to_sym
+    content_type ct
   end
 end
 
@@ -96,6 +102,30 @@ class APITest < Test::Unit::TestCase
       end
     end
   end
+
+  def test_content_type_json
+    with_api(Simple) do
+      get_request({:path => '/ct', :query => {ct: 'json'}}, @err) do |c|
+        assert_equal c.response_header['Content-Type'], Rack::Mime.mime_type('.json')
+      end
+    end
+  end    
+
+  def test_content_type_js
+    with_api(Simple) do
+      get_request({:path => '/ct', :query => {ct: 'js'}}, @err) do |c|
+        assert_equal c.response_header['Content-Type'], Rack::Mime.mime_type('.js')
+      end
+    end
+  end    
+
+  def test_content_type_html
+    with_api(Simple) do
+      get_request({:path => '/ct', :query => {ct: 'html'}}, @err) do |c|
+        assert_equal c.response_header['Content-Type'], Rack::Mime.mime_type('.html')
+      end
+    end
+  end    
 
   # def test_raise
   #   with_api(Simple) do
