@@ -1,6 +1,7 @@
 # HISTORY
 
 ## v0.2.1
+- content-type support
 - Fix template bugs
 - Include HttpRouter params into env params
 - Rename config method to settings
