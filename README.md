@@ -1,46 +1,53 @@
-Helmet
-======
+# Helmet
+ 
+Helmet is a non-blocking (asynchronous) web framework built on top of [Goliath Web Server](https://github.com/postrank-labs/goliath/).
 
-Simple web framework for Goliath web server.
+The Helmet semantics is inspired on [Sinatra framework](http://www.sinatrarb.com/) and brings to Goliath some nice features:
 
-Helmet is **very** inspired on Sinatra framework  (https://github.com/bmizerany/sinatra) without losing the Goliath API design.
-The framework tries some functionalities that Goliath doesn't provide out of the box, like:
+- HTTP Route processing, using the kick-ass [http_router gem](https://github.com/joshbuddy/http_router).
+- Simplified template support, using the [tilt gem](https://github.com/rtomayko/tilt).
+- Helpers support.
 
-  - Session management
-  - Simplified template support
-  - Simple notation for HTTP verbs and filters
+## Example
 
-This is the very first version, all the APIand code will be reviewed.
-
-Example
-=======
+Create hello.rb:
 
 ```ruby
 require 'helmet'
 
-class Misc < Helmet::API
+class Hello < Helmet::API
   
-  use Rack::Static,
-    :root => public_folder, # Default: ./public
-    :urls => ['/css']
+  helpers do
 
-  get '/' do 
-    erb(:index, {:layout => :layout}, {:data => session[:data]})
+    def say_hello name
+      "Hello #{name}!!!"
+    end
+
   end
-  
-  post '/session' do |env|
-    erb(:index, {:layout => :layout}, {:data => session[:data]})
+
+  get '/:name' do
+    say_hello params[:name]
   end
-  
+
 end
 ```
-See examples directory
 
-License
-=======
-Goliath License, (https://github.com/postrank-labs/goliath/blob/master/LICENSE)
- 
-Credits
-=======
+Run it from command line:
+    
+    ruby hello.rb
 
-Helmet is copyright Thiago Lewin <thiago_lewin@yahoo.com.br>
+For more information, see `/examples` directory.
+
+## Instalation
+
+Install from rubygem repository:
+
+    gem install helmet
+
+Install from source:
+
+    rake gem 
+
+## License
+
+Helmet is released under MIT license. Please, take a look at LICENSE file.
